@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(name='dslseq',
     version='0.1',
-    description=open('README.md'),
+    description=open('README.md').read(),
     author='Ryan M Harrison',
     author_email='ryan.m.harrison@gmail.com',
     url='https://github.com/rmharrison/dsl_sequence',

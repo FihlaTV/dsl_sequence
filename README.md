@@ -6,10 +6,13 @@ TATAT
 CAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAG
 AATAATAATAATAATAATAATAATAATAAT
 
+## Install
+>> make install # Recommend from virtualenv
+
 ## Test
 >> make test
 
-## Example: CODIS
+## Example: CODIS (Combined DNA Index System)
 >> make example
 
 The example listed is the complete reference set for the 13 loci of the CODIS panel (Combined DNA Index System).
