@@ -51,9 +51,11 @@ if __name__ == '__main__':
         seq_repeat = config.get(allele, 'seq_repeat')
         output_header = "REF_{}_{}".format(loci_name, allele)
         expand_sequence_args = expand_sequence.parser.parse_args([
-                                                  '--seq_fwd', seq_fwd, 
-                                                  '--seq_repeat', seq_repeat, 
+                                                  '--seq_fwd', seq_fwd,
+                                                  '--seq_repeat', seq_repeat,
                                                   '--seq_rev', seq_rev,
                                                   '--output_fasta', os.path.join(args.output_dir, "{}.fasta".format(output_header)),
                                                   '--output_header', output_header])
-        expand_sequence.main(expand_sequence_args)
+        sequence = expand_sequence.seq_from_args(expand_sequence_args)
+        expand_sequence.write_fasta(sequence, expand_sequence_args.output_fasta, output_header=expand_sequence_args.output_header)
+

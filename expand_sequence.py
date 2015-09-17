@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import doctest
 import glob
 import os
 import re
@@ -28,8 +29,8 @@ def _spec_decomposition(seq_specification):
     """ Return a list of tuples decomposing the `seq_specification`.
 
     For example,
-    TA [CAG]20 --> [('TA', '', ''),
-                    (''), 'CAG', '20')]
+    >>> _spec_decomposition('TA [CAG]20')
+    [('TA', '', ''), ('', 'CAG', '20')]
 
     Assumes that the seq_specification is properly cleaned, and follows
     the 'rules' outlines in func:`seq_expand`
@@ -44,13 +45,22 @@ def seq_expand(seq_specification):
     Expand a `seq_specification` into a full sequence.
 
     For example,
-    AT [AGAT]5 GC --> AT AGAT AGAT AGAT AGAT AGAT GC (spaces for clarity only)
+    >>> seq_expand('AT [AGAT]5 GC')
+    'ATAGATAGATAGATAGATAGATGC'
+
+    or
+    >>> seq_expand('AT (CAG)5 GC (GGC)10')
+    'ATCAGCAGCAGCAGCAGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGC'
 
     Rules:
     * All sequences must be bounded by brackets, i.e. [...] or (...)
     * Spaces are ignored
     * Case insensitive
     * Letters: ATCGX (X is taken as an unnatural base by convention)
+
+    Nesting is not currently supported, so no:
+    >>> seq_expand('AT ( (CAG)5 GC (GGC)10)5')
+    'ATCAGCAGCAGCAGCAGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGC'
 
     :param: seq_specification
 
@@ -74,39 +84,43 @@ def seq_expand(seq_specification):
             seq+=bases_bracket * int(count_bracket)
     return seq
 
-def main(args):
-    """ Main function allows script execution with external args.
-    Best to use `func:seq_expand()` with external calls.
+def write_fasta(sequence, output_fasta, output_header=None):
+    """ Write a fasta file """
+    dirname = os.path.dirname(output_fasta)
+    if not (os.path.isdir(dirname) or dirname==''):
+        os.makedirs(dirname)
+    if output_header is None:
+        output_header = os.path.basename(output_fasta)
+    rec=SeqRecord.SeqRecord(seq=Seq.Seq(sequence), id=output_header, description='')
+    with open(output_fasta, "w") as handle:
+        SeqIO.write(rec, handle, "fasta")
+    return True
 
-    Why?: Side-effects...
-    * Print to screen
-    * Write to file
+def seq_from_args(args):
+    """ Probably best to use `func:seq_expand()` with external calls.
+    Using the args directly is for convenience.
+
+    >>> args = parser.parse_args(['--seq_fwd', '[ATA]2A', '--seq_repeat', '(GGC)11', '--seq_rev', 'AGTATA'])
+    >>> seq_from_args(args)
+    'ATAATAAGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCAGTATA'
     """
     seq_struct = [('seq_fwd', seq_expand(args.seq_fwd)),
                   ('seq_repeat', seq_expand(args.seq_repeat)),
                   ('seq_rev', seq_expand(args.seq_rev)),
                  ]
-
     sequence=''
     for label, seq in seq_struct:
         sequence+=seq
-
-    if args.output_fasta is not None:
-        dirname = os.path.dirname(args.output_fasta)
-        if not os.path.isdir(dirname):
-            os.makedirs(dirname)
-        if args.output_header is None:
-            args.output_header = os.path.basename(args.output_fasta)
-        rec=SeqRecord.SeqRecord(seq=Seq.Seq(sequence), id=args.output_header, description=str((args.seq_fwd, args.seq_repeat, args.seq_rev)))
-
-        with open(args.output_fasta, "w") as handle:
-            SeqIO.write(rec, handle, "fasta")
-    else:
-        print sequence
+    return sequence
 
 if __name__ == '__main__':
     args = parser.parse_args()
     if args.seq_fwd=='' and args.seq_repeat=='' and args.seq_rev=='':
         parser.print_help()
-    main(args)
+    sequence = seq_from_args(args)
+
+    if args.output_fasta is not None:
+        write_fasta(sequence, args.output_fasta, output_header=args.output_header)
+    else:
+        print sequence
 
